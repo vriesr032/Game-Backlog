@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Game Backlog</string>
+    <string name="action_delete">Delete</string>
+    <string name="create_game">Create Game</string>
+    <string name="edit_game">Edit Game</string>
+    <string name="action_back">action_back</string>
+    <string name="title">Title</string>
+    <string name="platform">Platform</string>
+    <string name="title">Title</string>
+    <string name="platform">Platform</string>
+    <string name="status">Status</string>
+</resources>
