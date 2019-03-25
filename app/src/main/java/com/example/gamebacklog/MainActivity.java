@@ -2,7 +2,6 @@ package com.example.gamebacklog;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
@@ -10,13 +9,13 @@ import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -44,6 +43,23 @@ public class MainActivity extends AppCompatActivity implements RecyclerView.OnIt
 
         initRecyclerView();
         getAllGames();
+
+        ItemTouchHelper.SimpleCallback simpleItemTouchCallback =
+                new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
+                    @Override
+                    public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
+                        return false;
+                    }
+                    //Called when a user swipes left or right on a ViewHolder
+                    @Override
+                    public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir) {
+                        int position = (viewHolder.getAdapterPosition());
+                        deleteGame(gameList.get(position));
+                    }
+                };
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleItemTouchCallback);
+
+        itemTouchHelper.attachToRecyclerView(rvGameList);
 
         FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -78,15 +94,6 @@ public class MainActivity extends AppCompatActivity implements RecyclerView.OnIt
 
             @Override
             public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-                if(e1.getX() - e2.getX() > 50 || e2.getX() - e1.getX() > 50){
-                    View child = rvGameList.findChildViewUnder(e1.getX(), e1.getY());
-                    if (child != null) {
-                        int adapterPosition = rvGameList.getChildAdapterPosition(child);
-                        deleteGame(gameList.get(adapterPosition));
-                    }
-                    return true;
-                }
-
                 if (e1.getY() < e2.getY()) {
                     getAllGames();
                 }
