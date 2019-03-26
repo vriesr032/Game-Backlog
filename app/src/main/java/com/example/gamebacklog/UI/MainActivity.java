@@ -1,8 +1,11 @@
-package com.example.gamebacklog;
+package com.example.gamebacklog.UI;
 
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DividerItemDecoration;
@@ -16,10 +19,12 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.example.gamebacklog.Database.MainViewModel;
+import com.example.gamebacklog.Model.Game;
+import com.example.gamebacklog.R;
+
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity implements RecyclerView.OnItemTouchListener {
 
@@ -27,22 +32,28 @@ public class MainActivity extends AppCompatActivity implements RecyclerView.OnIt
     private RecyclerView rvGameList;
     private List<Game> gameList = new ArrayList<>();
     private GestureDetector gestureDetector;
-    private GameRoomDatabase db;
-    private Executor executor = Executors.newSingleThreadExecutor();
     public Game game;
+    private MainViewModel mainViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = findViewById(R.id.toolbar);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        db = GameRoomDatabase.getDatabase(this);
+        mainViewModel = ViewModelProviders.of(this).get(MainViewModel.class);
+        mainViewModel.getGames().observe(this, new Observer<List<Game>>() {
+            @Override
+            public void onChanged(@Nullable List<Game> games) {
+                gameList = games;
+                updateUI();
+            }
+        });
 
 
         initRecyclerView();
-        getAllGames();
+        mainViewModel.getGames();
 
         ItemTouchHelper.SimpleCallback simpleItemTouchCallback =
                 new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
@@ -54,7 +65,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerView.OnIt
                     @Override
                     public void onSwiped(RecyclerView.ViewHolder viewHolder, int swipeDir) {
                         int position = (viewHolder.getAdapterPosition());
-                        deleteGame(gameList.get(position));
+                        mainViewModel.delete(gameList.get(position));
                     }
                 };
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleItemTouchCallback);
@@ -88,6 +99,8 @@ public class MainActivity extends AppCompatActivity implements RecyclerView.OnIt
                     game = gameList.get(adapterPosition);
                     Intent intent = new Intent(MainActivity.this, EditGameActivity.class);
                     intent.putExtra("game", game.getId());
+                    intent.putExtra("title", game.getTitle());
+                    intent.putExtra("platform", game.getPlatform());
                     startActivity(intent);
                 }
             }
@@ -95,7 +108,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerView.OnIt
             @Override
             public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
                 if (e1.getY() < e2.getY()) {
-                    getAllGames();
+                    mainViewModel.getGames();
                 }
 
                 return true;
@@ -103,48 +116,16 @@ public class MainActivity extends AppCompatActivity implements RecyclerView.OnIt
         });
 
         rvGameList.addOnItemTouchListener(this);
-        getAllGames();
+        mainViewModel.getGames();
     }
 
-    private void updateUI(List<Game> games) {
-        gameList.clear();
-        gameList.addAll(games);
-        gameListAdapter.notifyDataSetChanged();
-    }
-
-    public void getAllGames() {
-        executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                final List<Game> games = db.gameDao().getAllGames();
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        updateUI(games);
-                    }
-                });
-            }
-        });
-    }
-
-    private void deleteGame(final Game game) {
-        executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                db.gameDao().delete(game);
-                getAllGames();
-            }
-        });
-    }
-
-    private void deleteAllGames(final List<Game> games) {
-        executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                db.gameDao().delete(games);
-                getAllGames();
-            }
-        });
+    private void updateUI() {
+        if (gameListAdapter == null) {
+            gameListAdapter = new GameListAdapter(gameList);
+            rvGameList.setAdapter(gameListAdapter);
+        } else {
+            gameListAdapter.swapList(gameList);
+        }
     }
 
     @Override
@@ -158,7 +139,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerView.OnIt
         int id = item.getItemId();
 
         if (id == R.id.action_delete) {
-            deleteAllGames(gameList);
+            mainViewModel.deleteAllGames(gameList);
             return true;
         }
 

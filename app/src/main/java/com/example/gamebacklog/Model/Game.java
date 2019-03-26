@@ -1,4 +1,4 @@
-package com.example.gamebacklog;
+package com.example.gamebacklog.Model;
 
 import android.arch.persistence.room.ColumnInfo;
 import android.arch.persistence.room.Entity;

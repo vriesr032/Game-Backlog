@@ -1,10 +1,13 @@
-package com.example.gamebacklog;
+package com.example.gamebacklog.Database;
 
+import android.arch.lifecycle.LiveData;
 import android.arch.persistence.room.Dao;
 import android.arch.persistence.room.Delete;
 import android.arch.persistence.room.Insert;
 import android.arch.persistence.room.Query;
 import android.arch.persistence.room.Update;
+
+import com.example.gamebacklog.Model.Game;
 
 import java.util.List;
 
@@ -23,6 +26,7 @@ public interface GameDao {
     @Update
     void update(Game game);
 
-    @Query("SELECT * from game_table")
-    List<Game> getAllGames();
+    @Query("SELECT * FROM game_table")
+    //List<Game> getAllGames();
+    LiveData<List<Game>> getAllGames();
 }

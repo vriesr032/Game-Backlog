@@ -1,4 +1,4 @@
-package com.example.gamebacklog;
+package com.example.gamebacklog.UI;
 
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
@@ -6,6 +6,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import com.example.gamebacklog.Model.Game;
+import com.example.gamebacklog.R;
 
 import java.util.List;
 
@@ -36,6 +39,13 @@ public class GameListAdapter extends RecyclerView.Adapter<GameListAdapter.ViewHo
     @Override
     public int getItemCount() {
         return gameList.size();
+    }
+
+    public void swapList (List<Game> newList) {
+        gameList = newList;
+        if (newList != null) {
+            this.notifyDataSetChanged();
+        }
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {

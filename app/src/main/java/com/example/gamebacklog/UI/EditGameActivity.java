@@ -1,5 +1,6 @@
-package com.example.gamebacklog;
+package com.example.gamebacklog.UI;
 
+import android.arch.lifecycle.ViewModelProviders;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
@@ -13,6 +14,10 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
 
+import com.example.gamebacklog.Database.MainViewModel;
+import com.example.gamebacklog.Model.Game;
+import com.example.gamebacklog.R;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -21,27 +26,34 @@ import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-public class CreateGameActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
+public class EditGameActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
 
     private EditText title;
     private EditText platform;
     private Spinner status;
+    private String Title;
+    private String Platform;
+    private String Status;
+    private String Date;
+    private int state;
     private Date atm = Calendar.getInstance().getTime();
     private SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
     private Executor executor = Executors.newSingleThreadExecutor();
-    private GameRoomDatabase db;
+    private MainViewModel mainViewModel;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_create_game);
-        Toolbar toolbar2 = findViewById(R.id.toolbar2);
-        setSupportActionBar(toolbar2);
+        setContentView(R.layout.activity_edit_game);
+        Toolbar toolbar3 = findViewById(R.id.toolbar3);
+        setSupportActionBar(toolbar3);
 
-        title = findViewById(R.id.create_title);
-        platform = findViewById(R.id.create_platform);
-        status = findViewById(R.id.create_spinner);
-        db = GameRoomDatabase.getDatabase(this);
+        title = findViewById(R.id.edit_title);
+        platform = findViewById(R.id.edit_platform);
+        status = findViewById(R.id.edit_spinner);
+        title.setText(getIntent().getStringExtra("title"));
+        platform.setText(getIntent().getStringExtra("platform"));
+        mainViewModel = ViewModelProviders.of(this).get(MainViewModel.class);
 
         status.setOnItemSelectedListener(this);
 
@@ -55,30 +67,32 @@ public class CreateGameActivity extends AppCompatActivity implements AdapterView
         dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         status.setAdapter(dataAdapter);
 
-        FloatingActionButton add = findViewById(R.id.add);
-        add.setOnClickListener(new View.OnClickListener() {
+        FloatingActionButton update = findViewById(R.id.update);
+        update.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                initCreateGame();
+                initUpdateGame();
+                finish();
             }
         });
     }
 
-    private void initCreateGame(){
-        String Title = title.getText().toString();
-        String Platform = platform.getText().toString();
-        String Status = status.getSelectedItem().toString();
-        String Date = dateFormat.format(atm);
-        final Game game = new Game(Title, Platform, Status, Date);
-        insertGame(game);
-        finish();
+    private void initUpdateGame(){
+        int gameid = (int) getIntent().getSerializableExtra("game");
+        Game game = new Game(Title, Platform, Status, Date);
+        game.setId(gameid);
+        game.setTitle(title.getText().toString());
+        game.setPlatform(platform.getText().toString());
+        game.setStatus(status.getSelectedItem().toString());
+        game.setDate(dateFormat.format(atm));
+        updateGame(game);
     }
 
-    private void insertGame(final Game game){
+    private void updateGame(final Game game){
         executor.execute(new Runnable() {
             @Override
             public void run() {
-                db.gameDao().insert(game);
+                mainViewModel.update(game);
                 runOnUiThread(new Runnable() { // Optionally clear the text from the input field
                     @Override
                     public void run() {
@@ -92,7 +106,7 @@ public class CreateGameActivity extends AppCompatActivity implements AdapterView
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_create_game, menu);
+        getMenuInflater().inflate(R.menu.menu_edit_game, menu);
         return true;
     }
 
